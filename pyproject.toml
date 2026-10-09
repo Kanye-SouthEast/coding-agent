@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coding-agent"
+version = "0.1.0"
+description = "基于 LangGraph 的自主编程多 Agent 框架"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph>=0.2",
+    "langgraph-checkpoint-sqlite>=3.1",
+    "langchain-core>=0.3",
+    "langchain-anthropic>=0.3",
+    "langchain-openai>=0.2",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "python-dotenv>=1.0",
+    "pymilvus>=2.6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "mypy>=1.11", "build>=1.2"]
+monitoring = ["prometheus-client>=0.20"]
+
+[project.scripts]
+coding-agent = "coding_agent.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+# 只开 E(pycodestyle 风格) + F(pyflakes 真实 bug)，保守起步保证 CI 首跑即绿；
+# 后续可逐步加 I(isort)/UP/B 收紧。
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501"]  # 行长交给 ruff format 处理，不阻塞 lint
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true

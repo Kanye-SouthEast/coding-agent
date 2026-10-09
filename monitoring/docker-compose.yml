@@ -1,0 +1,56 @@
+# 自建监控全家桶：Prometheus（采集）+ Pushgateway（收 CLI 短命进程的 push 指标）
+# + Grafana（看板）+ node-exporter（宿主/容器指标）。
+#
+# 端口约定（注意避开 Milvus 的 9091 指标口）：
+#   - Pushgateway 宿主端口 9092（容器内 9091），应用 `CODING_AGENT_METRICS_PUSHGATEWAY` 指向 9092
+#   - Prometheus 9090、Grafana 3000、node-exporter 9100
+#
+# 启动：docker compose -f monitoring/docker-compose.yml up -d
+# 详见 monitoring/README.md。
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: pushgateway
+    ports:
+      - "9092:9091"   # 宿主 9092（避开 Milvus 9091）→ 容器内 9091
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin   # 首次登录 admin/admin，进入后建议改密码
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    command:
+      - --path.rootfs=/host
+    pid: host
+    ports:
+      - "9100:9100"
+    volumes:
+      - /:/host:ro,rslave
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
