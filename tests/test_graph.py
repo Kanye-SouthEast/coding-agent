@@ -34,18 +34,12 @@ def test_route_after_reviewer():
     assert route_after_reviewer({"review_feedback": "有 bug", "iteration": 0}) == "coder"
     assert route_after_reviewer({"review_feedback": "", "iteration": 0}) == "tester"
     # 达到迭代上限后即使有意见也不再回退
-    assert (
-        route_after_reviewer({"review_feedback": "有 bug", "iteration": settings.max_iterations})
-        == "tester"
-    )
+    assert route_after_reviewer({"review_feedback": "有 bug", "iteration": settings.max_iterations}) == "tester"
 
 
 def test_route_after_reviewer_veto_cap_forces_test():
     # reviewer 否决达到阈值 → 强制进测试，避免饿死 tester（对拍）
-    assert (
-        route_after_reviewer({"review_feedback": "有 bug", "iteration": 0, "review_vetoes": 1})
-        == "coder"
-    )
+    assert route_after_reviewer({"review_feedback": "有 bug", "iteration": 0, "review_vetoes": 1}) == "coder"
     assert (
         route_after_reviewer(
             {
@@ -62,10 +56,7 @@ def test_route_after_tester():
     assert route_after_tester({"test_result": "FAIL: boom", "iteration": 0}) == "coder"
     assert route_after_tester({"test_result": "PASS: ok", "iteration": 0}) == "scheduler"
     # 达到迭代上限后测试失败也不再回退
-    assert (
-        route_after_tester({"test_result": "FAIL: boom", "iteration": settings.max_iterations})
-        == "scheduler"
-    )
+    assert route_after_tester({"test_result": "FAIL: boom", "iteration": settings.max_iterations}) == "scheduler"
 
 
 def test_route_after_tester_retries_on_infra_failure():
@@ -73,9 +64,7 @@ def test_route_after_tester_retries_on_infra_failure():
     assert route_after_tester({"test_result": "FAIL: [tester] ValueError: x", "iteration": 0}) == "tester"
     # 迭代耗尽后同样落到 scheduler 终止，避免死循环
     assert (
-        route_after_tester(
-            {"test_result": "FAIL: [tester] ValueError: x", "iteration": settings.max_iterations}
-        )
+        route_after_tester({"test_result": "FAIL: [tester] ValueError: x", "iteration": settings.max_iterations})
         == "scheduler"
     )
 

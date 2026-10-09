@@ -68,14 +68,25 @@ class DockerSandbox:
         # 用列表传参（不经过宿主 shell），command 作为单个参数交给容器内 sh -c，
         # 从而保留命令里原有的引号。
         docker_cmd = [
-            "docker", "run", "--rm", "--name", name,
-            "--network", "none",                 # 断网，防止不可信代码外联
-            "--memory", self.memory,
-            "--cpus", self.cpus,
-            "-v", f"{host_path}:/workspace",
-            "-w", "/workspace",
+            "docker",
+            "run",
+            "--rm",
+            "--name",
+            name,
+            "--network",
+            "none",  # 断网，防止不可信代码外联
+            "--memory",
+            self.memory,
+            "--cpus",
+            self.cpus,
+            "-v",
+            f"{host_path}:/workspace",
+            "-w",
+            "/workspace",
             self.image,
-            "sh", "-c", command,
+            "sh",
+            "-c",
+            command,
         ]
         try:
             proc = subprocess.run(docker_cmd, capture_output=True, text=True, timeout=timeout)

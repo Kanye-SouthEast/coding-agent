@@ -44,10 +44,10 @@ def scheduler_node(state: AgentState) -> dict:
     return {
         "tasks": tasks,
         "current_task_index": nxt,
-        "iteration": 0,          # 每个任务独立的调试预算
+        "iteration": 0,  # 每个任务独立的调试预算
         "review_feedback": "",
-        "review_vetoes": 0,      # 每个任务独立的 reviewer 否决计数
+        "review_vetoes": 0,  # 每个任务独立的 reviewer 否决计数
         "test_result": "",
-        "same_fail_streak": 0,   # 每个任务独立的无进展计数
+        "same_fail_streak": 0,  # 每个任务独立的无进展计数
         "status": "coding",
     }

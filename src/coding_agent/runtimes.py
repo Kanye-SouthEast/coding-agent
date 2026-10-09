@@ -51,8 +51,8 @@ RUNTIMES: dict[str, dict] = {
         "entry_file": "main.cpp",
         "entry_run_test": "g++ -std=c++17 -O2 -I. $(find . -maxdepth 1 -name '*.cpp' -not -name 'main.cpp') {test} -o /tmp/test_bin && /tmp/test_bin",
         "code_hint": "遵循生产规范拆分：.h 头文件放类/函数声明（加 #pragma once 或 include guard），.cpp 实现文件 #include 自己的 .h 并写函数定义；一次输出一个 .h + 一个 .cpp，不要写 main()，其他任务 #include 你的 .h 复用。若本任务是入口任务（signature 要求 main()），把 main() 单独写在 main.cpp，其余复用逻辑仍按 .h/.cpp 拆分。",
-        "test_hint": "测试文件放在 tests/ 子目录（固定文件名 tests/main_test.cpp）：按 files 里待测头文件的真实文件名 #include 它（声明在 .h，编译时带 -I. 指向工作区根目录），在 main() 里按上面「暴力参考对拍」的方式验证（写一个暴力参考实现对比），通过时 std::cout << \"PASS\" << std::endl，失败 return 非零。所有 .cpp 会一起编译链接。",
-        "entry_test_hint": "【入口任务】本任务是可运行入口（main）。main 是全局入口、无法被测试脚本 import/调用，也不参与对拍（框架编译时会排除入口文件 main.cpp）。测试脚本只做轻量回归：include files 里复用函数的头文件（.h），按上面「暴力参考对拍」验证这些复用函数（如 tokenize/evaluate）的基本正确性。严禁尝试调用 main、严禁写模拟 argc/argv 的代码（char* argv[] = {\"...\"} 会把字符串字面量赋给非 const char*，触发编译警告）、严禁重新实现入口逻辑。入口的参数解析/返回码正确性由人工验证，不在本脚本内测。",
+        "test_hint": '测试文件放在 tests/ 子目录（固定文件名 tests/main_test.cpp）：按 files 里待测头文件的真实文件名 #include 它（声明在 .h，编译时带 -I. 指向工作区根目录），在 main() 里按上面「暴力参考对拍」的方式验证（写一个暴力参考实现对比），通过时 std::cout << "PASS" << std::endl，失败 return 非零。所有 .cpp 会一起编译链接。',
+        "entry_test_hint": '【入口任务】本任务是可运行入口（main）。main 是全局入口、无法被测试脚本 import/调用，也不参与对拍（框架编译时会排除入口文件 main.cpp）。测试脚本只做轻量回归：include files 里复用函数的头文件（.h），按上面「暴力参考对拍」验证这些复用函数（如 tokenize/evaluate）的基本正确性。严禁尝试调用 main、严禁写模拟 argc/argv 的代码（char* argv[] = {"..."} 会把字符串字面量赋给非 const char*，触发编译警告）、严禁重新实现入口逻辑。入口的参数解析/返回码正确性由人工验证，不在本脚本内测。',
     },
     "java": {
         "label": "Java 21",
@@ -61,7 +61,7 @@ RUNTIMES: dict[str, dict] = {
         "run_test": "javac -d /tmp/classes *.java {test} && java -cp /tmp/classes MainTest",
         "test_file": "tests/MainTest.java",
         "code_hint": "遵循生产规范：一个 public 类一个文件，文件名与 public 类名完全一致（类名 PascalCase）；把可复用函数写成 public static 方法，不要写 main()。",
-        "test_hint": "测试文件放在 tests/ 子目录（固定文件名 tests/MainTest.java，public 类名 MainTest，与待测类同处默认包），在 main() 里按上面「暴力参考对拍」的方式验证（写一个暴力参考实现对比），通过时 System.out.println(\"PASS\")，失败抛异常或 System.exit(非零)。",
+        "test_hint": '测试文件放在 tests/ 子目录（固定文件名 tests/MainTest.java，public 类名 MainTest，与待测类同处默认包），在 main() 里按上面「暴力参考对拍」的方式验证（写一个暴力参考实现对比），通过时 System.out.println("PASS")，失败抛异常或 System.exit(非零)。',
     },
     "go": {
         "label": "Go 1.23",

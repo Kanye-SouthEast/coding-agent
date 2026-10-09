@@ -9,7 +9,5 @@ from coding_agent.tools.sandbox import get_sandbox
 TIMEOUT = 30
 
 
-def run_command(
-    workspace: Path, command: str, timeout: int = TIMEOUT, language: str | None = None
-) -> tuple[int, str]:
+def run_command(workspace: Path, command: str, timeout: int = TIMEOUT, language: str | None = None) -> tuple[int, str]:
     return get_sandbox(language).run(workspace, command, timeout)

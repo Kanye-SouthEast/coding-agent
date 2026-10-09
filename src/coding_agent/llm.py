@@ -23,7 +23,12 @@ _BASE_URL_KEYS = {
 }
 
 
-def get_model(model_name: str | None = None, provider: str | None = None, max_tokens: int | None = None, timeout: float | None = None):
+def get_model(
+    model_name: str | None = None,
+    provider: str | None = None,
+    max_tokens: int | None = None,
+    timeout: float | None = None,
+):
     """返回一个 LangChain chat model，temperature=0 保证输出稳定。
 
     model_name 为空时用 settings.model（主力模型）；各节点可传入自己的模型名覆盖。
@@ -44,9 +49,7 @@ def get_model(model_name: str | None = None, provider: str | None = None, max_to
         try:
             from langchain_openai import ChatOpenAI
         except ImportError as e:  # pragma: no cover
-            raise RuntimeError(
-                f"使用 {provider} 需安装 langchain-openai：pip install langchain-openai"
-            ) from e
+            raise RuntimeError(f"使用 {provider} 需安装 langchain-openai：pip install langchain-openai") from e
 
         kwargs = {
             "model": model,
@@ -59,9 +62,7 @@ def get_model(model_name: str | None = None, provider: str | None = None, max_to
         if provider != "openai":  # 中转/国产端点需要显式 base_url 和 key
             api_key = os.getenv(_OPENAI_COMPAT_KEYS[provider])
             if not api_key:
-                raise RuntimeError(
-                    f"缺少 {_OPENAI_COMPAT_KEYS[provider]}，请在 .env 或环境变量中配置"
-                )
+                raise RuntimeError(f"缺少 {_OPENAI_COMPAT_KEYS[provider]}，请在 .env 或环境变量中配置")
             kwargs["base_url"] = os.getenv(_BASE_URL_KEYS.get(provider, "")) or settings.base_url
             kwargs["api_key"] = api_key
         return ChatOpenAI(**kwargs)
@@ -69,9 +70,7 @@ def get_model(model_name: str | None = None, provider: str | None = None, max_to
     try:
         from langchain_anthropic import ChatAnthropic
     except ImportError as e:  # pragma: no cover
-        raise RuntimeError(
-            "使用 Anthropic 需安装 langchain-anthropic：pip install langchain-anthropic"
-        ) from e
+        raise RuntimeError("使用 Anthropic 需安装 langchain-anthropic：pip install langchain-anthropic") from e
     return ChatAnthropic(
         model=model,
         temperature=0,
@@ -191,9 +190,7 @@ def invoke_json(
     for i in range(attempts):
         try:
             return extract_json(
-                invoke_llm(
-                    prompt, model=model, provider=provider, max_tokens=max_tokens, timeout=timeout
-                )
+                invoke_llm(prompt, model=model, provider=provider, max_tokens=max_tokens, timeout=timeout)
             )
         except ValueError:
             if i == attempts - 1:

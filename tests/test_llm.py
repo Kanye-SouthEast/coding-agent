@@ -29,7 +29,9 @@ def test_invoke_llm_retries_transient(monkeypatch):
                 raise _FakeTimeout("slow")
             return type("R", (), {"content": "ok"})()
 
-    monkeypatch.setattr("coding_agent.llm.get_model", lambda model=None, provider=None, max_tokens=None, timeout=None: Model())
+    monkeypatch.setattr(
+        "coding_agent.llm.get_model", lambda model=None, provider=None, max_tokens=None, timeout=None: Model()
+    )
     assert invoke_llm("x") == "ok"
     assert calls["n"] == 2
 
@@ -43,7 +45,9 @@ def test_invoke_llm_raises_non_transient_immediately(monkeypatch):
             calls["n"] += 1
             raise ValueError("bad request")
 
-    monkeypatch.setattr("coding_agent.llm.get_model", lambda model=None, provider=None, max_tokens=None, timeout=None: Model())
+    monkeypatch.setattr(
+        "coding_agent.llm.get_model", lambda model=None, provider=None, max_tokens=None, timeout=None: Model()
+    )
     with pytest.raises(ValueError):
         invoke_llm("x")
     assert calls["n"] == 1  # 非瞬时错误不重试
@@ -58,7 +62,9 @@ def test_invoke_llm_raises_after_attempts(monkeypatch):
             calls["n"] += 1
             raise _FakeTimeout("slow")
 
-    monkeypatch.setattr("coding_agent.llm.get_model", lambda model=None, provider=None, max_tokens=None, timeout=None: Model())
+    monkeypatch.setattr(
+        "coding_agent.llm.get_model", lambda model=None, provider=None, max_tokens=None, timeout=None: Model()
+    )
     with pytest.raises(_FakeTimeout):
         invoke_llm("x", attempts=2)
     assert calls["n"] == 2
@@ -110,9 +116,7 @@ def test_reviewer_resets_vetoes_on_approve(monkeypatch):
 
     monkeypatch.setattr(settings, "mock", False)
     monkeypatch.setattr(rev, "retrieve_context", lambda q: "")
-    monkeypatch.setattr(
-        rev, "invoke_json", lambda p, model=None, provider=None: {"approve": True, "feedback": ""}
-    )
+    monkeypatch.setattr(rev, "invoke_json", lambda p, model=None, provider=None: {"approve": True, "feedback": ""})
     state = {
         "requirement": "r",
         "tasks": [{"id": 1, "desc": "a", "deps": [], "status": "pending"}],
@@ -364,9 +368,7 @@ def test_extract_content_falls_back_to_reasoning_content():
     assert llm._extract_content(type("R", (), {"content": "ok"})()) == "ok"
     # 推理模型：content 为空，答案落在 additional_kwargs.reasoning_content
     assert (
-        llm._extract_content(
-            type("R", (), {"content": "", "additional_kwargs": {"reasoning_content": "thought"}})()
-        )
+        llm._extract_content(type("R", (), {"content": "", "additional_kwargs": {"reasoning_content": "thought"}})())
         == "thought"
     )
     # content 为空且无 reasoning_content → 空串（上游会走 JSON 解析失败降级）

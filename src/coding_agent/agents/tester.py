@@ -118,11 +118,7 @@ def tester_node(state: AgentState) -> dict:
     else:
         # 上一次 tester 自身失败（FAIL: [tester] 前缀）的报错，重试时注入 prompt 让模型自我纠正
         prev_result = state.get("test_result", "") or ""
-        prev_failure = (
-            prev_result[len("FAIL: [tester] "):]
-            if prev_result.startswith("FAIL: [tester]")
-            else ""
-        )
+        prev_failure = prev_result[len("FAIL: [tester] ") :] if prev_result.startswith("FAIL: [tester]") else ""
         # 入口任务（signature 含 main()）：注入专用测试提示，改用排除入口文件的编译命令
         is_entry = _is_entry_task(task)
         test_hint = runtime["test_hint"]
@@ -149,8 +145,7 @@ def tester_node(state: AgentState) -> dict:
             extras = _extra_invalid_inputs(task, data)
             if extras:
                 raise ValueError(
-                    "非法输入用例超出本任务 contract 清单（可能是错判层级）: "
-                    + ", ".join(repr(x) for x in extras)
+                    "非法输入用例超出本任务 contract 清单（可能是错判层级）: " + ", ".join(repr(x) for x in extras)
                 )
             test_code = data["code"]
             # 编译型语言的项目脚手架（如 Rust 的 Cargo.toml）先落盘
@@ -165,11 +160,7 @@ def tester_node(state: AgentState) -> dict:
             # 目前仅覆盖 Python；编译型语言的编译步已并入 run_test。
             if runtime["ext"] == "py":
                 compile(test_code, str(test_path), "exec")
-            run_cmd = (
-                runtime["entry_run_test"]
-                if is_entry and runtime.get("entry_run_test")
-                else runtime["run_test"]
-            )
+            run_cmd = runtime["entry_run_test"] if is_entry and runtime.get("entry_run_test") else runtime["run_test"]
             code, out = run_command(
                 settings.workspace,
                 run_cmd.format(test=test_path),

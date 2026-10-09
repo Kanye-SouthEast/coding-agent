@@ -60,9 +60,7 @@ def reviewer_node(state: AgentState) -> dict:
         # 缺记录（老数据）时回退到全量 files 兜底。
         task_key = str(state.get("current_task_index", -1))
         owned = (state.get("task_files") or {}).get(task_key, [])
-        review_files = (
-            {p: state["files"].get(p, "") for p in owned} if owned else state["files"]
-        )
+        review_files = {p: state["files"].get(p, "") for p in owned} if owned else state["files"]
         try:
             data = invoke_json(
                 REVIEW_PROMPT.format(
@@ -77,9 +75,7 @@ def reviewer_node(state: AgentState) -> dict:
             # 审查是「快反馈」关卡，超时/失败时放行，交由 tester 兜底真实正确性
             print(f"[reviewer] 审查调用失败，放行交由测试兜底: {e}", file=sys.stderr)
             return {"review_feedback": "", "review_vetoes": 0, "status": "testing"}
-        feedback = (
-            "" if _to_bool(data.get("approve")) else data.get("feedback", "存在需要修复的问题")
-        )
+        feedback = "" if _to_bool(data.get("approve")) else data.get("feedback", "存在需要修复的问题")
         if feedback:
             print(f"[reviewer] 审查未通过：{feedback}", file=sys.stderr, flush=True)
     # 否决计数：通过/放行归零；否决 +1。达到 max_review_vetoes 后由路由强制进测试，

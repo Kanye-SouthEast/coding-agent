@@ -9,21 +9,7 @@ from coding_agent.memory import _chunk, _chunk_python, _rerank
 
 def test_chunk_python_splits_top_level_defs():
     code = (
-        '"""doc"""\n'
-        "\n"
-        "import os\n"
-        "\n"
-        "\n"
-        "def foo():\n"
-        "    return 1\n"
-        "\n"
-        "\n"
-        "def bar():\n"
-        "    return 2\n"
-        "\n"
-        "\n"
-        "class A:\n"
-        "    pass\n"
+        '"""doc"""\n\nimport os\n\n\ndef foo():\n    return 1\n\n\ndef bar():\n    return 2\n\n\nclass A:\n    pass\n'
     )
     chunks = _chunk_python(code)
     assert len(chunks) == 4  # header(docstring+import) + foo + bar + A

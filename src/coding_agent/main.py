@@ -61,8 +61,7 @@ def _load_sqlite_saver():
         from langgraph.checkpoint.sqlite import SqliteSaver
     except ImportError as e:  # pragma: no cover
         raise RuntimeError(
-            "持久化 checkpoint 需安装 langgraph-checkpoint-sqlite："
-            "pip install langgraph-checkpoint-sqlite"
+            "持久化 checkpoint 需安装 langgraph-checkpoint-sqlite：pip install langgraph-checkpoint-sqlite"
         ) from e
     return SqliteSaver
 
@@ -107,7 +106,10 @@ def _report_failure(e: Exception) -> None:
     print("\n" + "=" * 60, file=sys.stderr)
     print(f"运行中断：{name}: {e}", file=sys.stderr)
     if "Timeout" in name or "Connect" in name:
-        print("提示：上游模型请求超时/网络抖动，属瞬时问题。checkpoint 已保存，稍后可用 --resume 从断点续跑。", file=sys.stderr)
+        print(
+            "提示：上游模型请求超时/网络抖动，属瞬时问题。checkpoint 已保存，稍后可用 --resume 从断点续跑。",
+            file=sys.stderr,
+        )
     else:
         print("提示：checkpoint 已保存，可用 --resume 续跑；如需排查请查看上方异常原因。", file=sys.stderr)
     print("=" * 60, file=sys.stderr)

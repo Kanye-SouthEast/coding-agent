@@ -84,9 +84,7 @@ def test_planner_cache_hit_skips_milvus(monkeypatch):
         scenario_hint=planner._select_scenario("实现一个命令行计算器")["hint"],
         fewshot="",
     )
-    key = planner._plan_cache_key(
-        base, settings.planner_model or "", settings.planner_provider or ""
-    )
+    key = planner._plan_cache_key(base, settings.planner_model or "", settings.planner_provider or "")
     monkeypatch.setattr(
         planner,
         "_load_plan_cache",
@@ -132,14 +130,10 @@ def test_planner_miss_path_injects_fewshot_and_indexes(monkeypatch):
         ],
     )
     indexed = []
-    monkeypatch.setattr(
-        planner, "index_plan", lambda req, plan: indexed.append((req, plan)) or 1
-    )
+    monkeypatch.setattr(planner, "index_plan", lambda req, plan: indexed.append((req, plan)) or 1)
 
     planner.planner_node({"requirement": "实现一个命令行计算器"})
 
     assert "相近需求" in seen["prompt"]  # few-shot 已注入
     assert "实现一个简单计算器" in seen["prompt"]
-    assert indexed == [
-        ("实现一个命令行计算器", [{"id": 1, "desc": "x", "deps": [], "status": "pending"}])
-    ]
+    assert indexed == [("实现一个命令行计算器", [{"id": 1, "desc": "x", "deps": [], "status": "pending"}])]

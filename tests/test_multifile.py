@@ -54,7 +54,10 @@ def test_coder_accepts_single_file_fallback(monkeypatch, tmp_path):
     monkeypatch.setattr(
         coder,
         "invoke_json",
-        lambda prompt, model=None, provider=None, timeout=None: {"path": "two_sum.py", "code": "def two_sum(a, b):\n    return a + b\n"},
+        lambda prompt, model=None, provider=None, timeout=None: {
+            "path": "two_sum.py",
+            "code": "def two_sum(a, b):\n    return a + b\n",
+        },
     )
     monkeypatch.setattr(coder, "index_files", lambda files: len(files))
 

@@ -196,11 +196,7 @@ def _rerank(query: str, docs: list[tuple[str, str]], top_n: int) -> list[tuple[s
         )
         r.raise_for_status()
         results = r.json().get("results", [])
-        ordered = [
-            docs[item["index"]]
-            for item in results
-            if 0 <= item.get("index", -1) < len(docs)
-        ]
+        ordered = [docs[item["index"]] for item in results if 0 <= item.get("index", -1) < len(docs)]
         return (ordered or docs[:top_n])[:top_n]
     except Exception as e:
         print(f"[memory] rerank 失败（回退向量序）: {e}", file=sys.stderr)
@@ -221,10 +217,7 @@ def _search_impl(query: str, k: int) -> list[str]:
         output_fields=["path", "text"],
     )
     hits = res[0] if res else []
-    docs = [
-        (h.get("entity", {}).get("path", "?"), h.get("entity", {}).get("text", ""))
-        for h in hits
-    ]
+    docs = [(h.get("entity", {}).get("path", "?"), h.get("entity", {}).get("text", "")) for h in hits]
     if settings.rerank_model and len(docs) > k:
         docs = _rerank(query, docs, k)
     else:
@@ -278,9 +271,7 @@ def index_plan(requirement: str, plan: list) -> int:
     if not requirement or not plan:
         return 0
     try:
-        result = _call_with_timeout(
-            _index_plan_impl, settings.milvus_timeout, requirement, plan
-        )
+        result = _call_with_timeout(_index_plan_impl, settings.milvus_timeout, requirement, plan)
         if result is _TIMEOUT:
             print("[memory] 计划索引超时（已降级跳过）", file=sys.stderr)
             return 0
@@ -303,10 +294,7 @@ def _search_plans_impl(query: str, k: int) -> list[dict]:
         output_fields=["requirement", "plan"],
     )
     hits = res[0] if res else []
-    docs = [
-        (h.get("entity", {}).get("requirement", ""), h.get("entity", {}).get("plan", ""))
-        for h in hits
-    ]
+    docs = [(h.get("entity", {}).get("requirement", ""), h.get("entity", {}).get("plan", "")) for h in hits]
     if settings.rerank_model and len(docs) > k:
         # 只在「需求文本」上重排（plan JSON 只是载荷，不该参与重排）
         ordered = _rerank(query, [(req, req) for req, _ in docs], k)

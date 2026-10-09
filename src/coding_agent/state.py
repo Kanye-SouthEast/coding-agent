@@ -9,17 +9,17 @@ from langgraph.graph.message import add_messages
 
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]  # 全局对话 / 轨迹
-    requirement: str                          # 原始需求
-    tasks: list[dict[str, Any]]               # 任务列表 [{id, desc, deps, status}]；status ∈ pending|done|failed|blocked
-    current_task_index: int                   # 当前任务索引，-1 表示无
-    files: dict[str, str]                     # 文件内容 {path: content}
-    review_feedback: str                      # 审查意见（空串表示通过）
-    review_vetoes: int                        # 本任务内 reviewer 连续否决次数（跑过一次测试后复位；达到阈值后强制进测试，防止饿死 tester）
-    test_result: str                          # 最近一次测试输出
-    same_fail_streak: int                     # 连续完全相同的测试失败次数（无进展熔断，达到阈值提前标 failed）
-    task_files: dict[str, list[str]]          # 每个任务拥有的文件路径 {task_index: [paths]}，用于清理改名后残留的孤儿文件
-    iteration: int                            # 当前任务的编码尝试次数
-    status: str                               # 当前阶段：planning|coding|reviewing|testing|done|failed
+    requirement: str  # 原始需求
+    tasks: list[dict[str, Any]]  # 任务列表 [{id, desc, deps, status}]；status ∈ pending|done|failed|blocked
+    current_task_index: int  # 当前任务索引，-1 表示无
+    files: dict[str, str]  # 文件内容 {path: content}
+    review_feedback: str  # 审查意见（空串表示通过）
+    review_vetoes: int  # 本任务内 reviewer 连续否决次数（跑过一次测试后复位；达到阈值后强制进测试，防止饿死 tester）
+    test_result: str  # 最近一次测试输出
+    same_fail_streak: int  # 连续完全相同的测试失败次数（无进展熔断，达到阈值提前标 failed）
+    task_files: dict[str, list[str]]  # 每个任务拥有的文件路径 {task_index: [paths]}，用于清理改名后残留的孤儿文件
+    iteration: int  # 当前任务的编码尝试次数
+    status: str  # 当前阶段：planning|coding|reviewing|testing|done|failed
 
 
 def current_task(state: AgentState) -> dict[str, Any]:

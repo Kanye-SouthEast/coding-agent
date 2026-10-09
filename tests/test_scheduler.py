@@ -23,7 +23,7 @@ def test_first_ready_respects_dependencies():
 def test_first_ready_skips_blocked():
     tasks = [
         {"id": 1, "desc": "a", "deps": [9], "status": "pending"},  # 被未完成的 9 阻塞
-        {"id": 2, "desc": "b", "deps": [], "status": "pending"},    # 就绪
+        {"id": 2, "desc": "b", "deps": [], "status": "pending"},  # 就绪
     ]
     assert _first_ready(tasks, set()) == 1  # 跳过被阻塞的任务 1，选任务 2
 

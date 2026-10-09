@@ -78,9 +78,25 @@ SCENARIOS: dict[str, dict] = {
     "parser": {
         "name": "解析器/编译器",
         "keywords": [
-            "计算器", "calculator", "解析", "parse", "编译", "compiler", "词法", "语法",
-            "表达式", "expression", "求值", "evaluate", "token", "ast", "dsl",
-            "解释器", "interpreter", "正则", "四则",
+            "计算器",
+            "calculator",
+            "解析",
+            "parse",
+            "编译",
+            "compiler",
+            "词法",
+            "语法",
+            "表达式",
+            "expression",
+            "求值",
+            "evaluate",
+            "token",
+            "ast",
+            "dsl",
+            "解释器",
+            "interpreter",
+            "正则",
+            "四则",
         ],
         "hint": (
             "  【本需求属于「解析器/编译器」类，contract 额外注意：】\n"
@@ -93,10 +109,38 @@ SCENARIOS: dict[str, dict] = {
     "algorithm": {
         "name": "算法/数据结构",
         "keywords": [
-            "算法", "algorithm", "排序", "sort", "搜索", "search", "两数", "two sum",
-            "合并", "merge", "动态规划", "dp", "图", "graph", "树", "tree", "栈", "stack",
-            "队列", "queue", "哈希", "hash", "链表", "linked list", "二分", "binary",
-            "leetcode", "数据结构", "去重", "前缀和", "回溯", "滑动窗口",
+            "算法",
+            "algorithm",
+            "排序",
+            "sort",
+            "搜索",
+            "search",
+            "两数",
+            "two sum",
+            "合并",
+            "merge",
+            "动态规划",
+            "dp",
+            "图",
+            "graph",
+            "树",
+            "tree",
+            "栈",
+            "stack",
+            "队列",
+            "queue",
+            "哈希",
+            "hash",
+            "链表",
+            "linked list",
+            "二分",
+            "binary",
+            "leetcode",
+            "数据结构",
+            "去重",
+            "前缀和",
+            "回溯",
+            "滑动窗口",
         ],
         "hint": (
             "  【本需求属于「算法/数据结构」类，contract 额外注意：】\n"
@@ -140,6 +184,7 @@ def _fallback_tasks(requirement: str) -> list[dict]:
 
 
 # ---- 计划缓存：同一需求复用上次拆解，保证 planner 稳定 ----
+
 
 def _plan_cache_key(prompt: str, model: str, provider: str) -> str:
     """计划缓存键：由 prompt（含需求+语言+PLAN_PROMPT 全文）+ 模型 + 供应商共同决定。
@@ -198,9 +243,7 @@ def planner_node(state: AgentState) -> dict:
             scenario_hint=scenario["hint"],
             fewshot="",
         )
-        key = _plan_cache_key(
-            base_prompt, settings.planner_model or "", settings.planner_provider or ""
-        )
+        key = _plan_cache_key(base_prompt, settings.planner_model or "", settings.planner_provider or "")
         cache = _load_plan_cache()
         if key in cache:
             tasks = [dict(t) for t in cache[key]]
@@ -210,9 +253,7 @@ def planner_node(state: AgentState) -> dict:
             # 注意这是「引导」而非「复用」——最终计划仍由 planner 针对当前需求生成，避免拿
             # 相近但不相同的契约去复用导致下游 coder/tester 越界断言。
             fewshot_pairs = (
-                search_plans(requirement, k=settings.planner_fewshot_k)
-                if settings.planner_fewshot_k > 0
-                else []
+                search_plans(requirement, k=settings.planner_fewshot_k) if settings.planner_fewshot_k > 0 else []
             )
             fewshot = _format_fewshot(fewshot_pairs) if fewshot_pairs else ""
             prompt = (

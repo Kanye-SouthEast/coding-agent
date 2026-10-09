@@ -170,9 +170,7 @@ def test_tester_node_flags_extra_invalid_inputs(monkeypatch):
 
     state = {
         "requirement": "r",
-        "tasks": [
-            {"id": 1, "desc": "a", "deps": [], "status": "pending", "invalid_inputs": ["1.2.3"]}
-        ],
+        "tasks": [{"id": 1, "desc": "a", "deps": [], "status": "pending", "invalid_inputs": ["1.2.3"]}],
         "current_task_index": 0,
         "files": {},
     }
@@ -216,8 +214,13 @@ def test_tester_node_cpp_entry_uses_exclude_command(monkeypatch):
     state = {
         "requirement": "实现命令行计算器入口",
         "tasks": [
-            {"id": 3, "desc": "入口", "deps": [1, 2], "status": "pending",
-             "signature": "int main(int argc, char* argv[])"}
+            {
+                "id": 3,
+                "desc": "入口",
+                "deps": [1, 2],
+                "status": "pending",
+                "signature": "int main(int argc, char* argv[])",
+            }
         ],
         "current_task_index": 0,
         "files": {},
@@ -253,8 +256,13 @@ def test_tester_node_cpp_normal_uses_glob_command(monkeypatch):
     state = {
         "requirement": "实现分词",
         "tasks": [
-            {"id": 1, "desc": "分词", "deps": [], "status": "pending",
-             "signature": "std::vector<Token> tokenize(const std::string&)"}
+            {
+                "id": 1,
+                "desc": "分词",
+                "deps": [],
+                "status": "pending",
+                "signature": "std::vector<Token> tokenize(const std::string&)",
+            }
         ],
         "current_task_index": 0,
         "files": {},
