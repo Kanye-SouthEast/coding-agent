@@ -56,10 +56,10 @@ jobs:
       # 装完 wheel 后冒烟跑一次入口，确认 console script 与包结构可用
       - run: coding-agent --help
 
-  # 手动触发：覆盖 pytest 未涉及的 Docker 沙箱路径（mock 默认走 docker 沙箱执行测试）
-  docker-smoke:
-    name: Docker sandbox smoke (manual)
-    if: github.event_name == 'workflow_dispatch'
+  # 自动化 Docker 沙箱集成测试：覆盖 pytest 单测未涉及的 Docker 沙箱路径。
+  # ubuntu 自带 Docker；DockerSandbox 直测 + 全流程 mock（get_sandbox→docker）双保险。
+  test-docker:
+    name: Docker sandbox integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +69,11 @@ jobs:
           cache: pip
       - run: pip install -e ".[dev]"
       - run: docker pull python:3.12-slim
-      - name: Run mock demo with docker sandbox
+      - name: DockerSandbox integration tests
+        env:
+          RUN_DOCKER_TESTS: "1"
+        run: python -m pytest -m docker -v
+      - name: Full mock loop with docker sandbox
         env:
           CODING_AGENT_SANDBOX: docker
           CODING_AGENT_INTERRUPT_BEFORE_PLAN: "false"

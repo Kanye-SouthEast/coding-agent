@@ -32,6 +32,9 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "docker: 需要 Docker 的集成测试（默认跳过，设 RUN_DOCKER_TESTS=1 运行）",
+]
 
 [tool.ruff]
 target-version = "py311"

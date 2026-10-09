@@ -16,6 +16,7 @@
 - **依赖感知的上下文注入**：coder / tester 只注入「当前任务 + 其传递依赖」已产出的文件（而非全量 `files`），文件随任务变多时控制 prompt 长度、剔除无关噪声；缺 `task_files` 等旧数据时宁多勿少回退全量
 - **计划稳定性**：同一需求复用上次拆解（本地 JSON 缓存）+ 相近需求语义检索注入 few-shot，保证拆解一致；按需求关键词注入解析器/算法等专项契约
 - **可观测**：审查意见与测试失败详情实时打印，结束后与事后都能查看
+- **外部监控**：LLM 层走 LangSmith（trace/成本/延迟，带语言/供应商元数据），基础设施与应用终态指标走自建 Prometheus + Pushgateway + Grafana；配套 GitHub Actions CI（lint + test + build）
 - **韧性降级**：LLM 单次请求有墙钟超时兜底（挂起自动转失败）；规划失败降级为单任务、审查失败放行交测试兜底、测试器自身故障回 tester 重试，不因单点故障崩溃
 - **按节点选模型**：规划/编码用推理模型（深度推理），审查/测试用非推理模型（快、稳、省）；每个节点可独立指定模型与供应商、留空回退主力模型
 
@@ -47,6 +48,8 @@ planner → (approve 人工批准) → scheduler → coder → reviewer → test
 ├── pyproject.toml          # 依赖 + 入口脚本 + pytest 配置
 ├── .env                    # 环境变量（已 gitignore，含 API key）
 ├── .planner_cache.json     # 计划缓存（同一需求复用上次拆解）
+├── .github/workflows/ci.yml # CI 流水线（GitHub Actions：lint + test + build + docker 冒烟）
+├── monitoring/             # 自建监控（Prometheus + Pushgateway + Grafana，详见 monitoring/README.md）
 ├── tests/                  # pytest 单元测试（图路由/调度/检索/语言分发/文件防护等）
 ├── checkpoints.sqlite      # 运行产生的 checkpoint（默认锚定到项目根）
 ├── workspace/              # 运行产物：生成的代码与测试（默认锚定到项目根）
@@ -59,6 +62,7 @@ planner → (approve 人工批准) → scheduler → coder → reviewer → test
     ├── runtimes.py         # 语言运行时注册表（镜像 + 测试器按语言分发）
     ├── graph.py            # LangGraph 图 + 条件路由（调试闭环 + 否决上限 + 无进展熔断）+ 人工审批中断
     ├── main.py             # CLI 入口
+    ├── metrics.py          # 指标上报（run 终态 → Prometheus Pushgateway，全程降级）
     ├── agents/             # 5 个 Agent 节点
     │   ├── planner.py      #   规划：需求 → 带精确契约（signature/contract/invalid_inputs）的任务 DAG + 场景识别 + 计划缓存/few-shot
     │   ├── scheduler.py    #   调度：按依赖推进任务、标记完成/失败/受阻、复位各计数器
@@ -186,6 +190,7 @@ python -m coding_agent.main [需求] [选项]
 | `CODING_AGENT_EMBEDDING_DIM` | `1024` | 嵌入向量维度 |
 | `CODING_AGENT_RERANK_MODEL` | `BAAI/bge-reranker-v2-m3` | 重排序模型（空串关闭） |
 | `CODING_AGENT_RERANK_CANDIDATES` | `12` | 向量召回候选数（重排前） |
+| `CODING_AGENT_METRICS_PUSHGATEWAY` | `""` | Prometheus Pushgateway 地址（如 `http://localhost:9092`）；留空则关闭指标上报 |
 
 > 自 0.1.0 起，`workspace` 与 `checkpoint_uri` 的默认值锚定到**项目根目录**（`config.py` 里的 `PROJECT_ROOT`），
 > 不再随启动目录变化——旧版本从不同目录启动会产生 `workspace/workspace/` 嵌套和多个 checkpoint 文件的问题已修复。
@@ -313,3 +318,61 @@ pytest 覆盖图路由（含否决上限、无进展熔断、`FAIL: [tester]` �
 ```bash
 python -m pytest
 ```
+
+## 监控与可观测
+
+分两层，各管一段：**LLM 层**走 LangSmith（trace / 成本 / 延迟 / 质量），**基础设施层**走自建 Prometheus + Pushgateway + Grafana（应用指标 / 告警）。
+
+### LangSmith —— LLM 层（零埋点）
+
+在 `.env` 配好 LangSmith，LangGraph 就会自动把每个节点、每次 LLM 调用串成 trace：
+
+```dotenv
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2_...
+LANGSMITH_PROJECT=coding-agent
+LANGSMITH_ENV=dev          # dev | ci | prod，区分本地与 CI 里的 trace
+```
+
+`main.py` 每次 `invoke` 会把 `language / provider / run_mode / thread_id` 挂到 trace 的 `metadata` 上（`_make_config()`），因此能在 LangSmith 里按语言、供应商、运行模式过滤与聚合，直接回答「哪个模型跑得慢、费钱、失败率高」。
+
+### 自建 Grafana 全家桶 —— 基础设施层
+
+CLI 进程跑完即退，Prometheus 拉取抓不到短命进程，所以指标走 **push 模型**：`metrics.py` 在 run/resume 结束时把终态指标推给 Pushgateway，Prometheus 再从 Pushgateway 抓取。
+
+```bash
+# 装上报依赖
+pip install -e ".[monitoring]"
+# 起全家桶（Prometheus + Pushgateway + Grafana）
+docker compose -f monitoring/docker-compose.yml up -d
+```
+
+`.env` 打开上报：
+
+```dotenv
+CODING_AGENT_METRICS_PUSHGATEWAY=http://localhost:9092
+```
+
+上报指标（标签 `language / run_mode / instance / run`）：
+
+| 指标 | 含义 |
+| --- | --- |
+| `coding_agent_run_status` | 本次运行终态（1=done，0=其他） |
+| `coding_agent_run_duration_seconds` | 本次运行耗时（秒） |
+| `coding_agent_tasks_total` | 本次运行任务总数 |
+| `coding_agent_tasks_{done,failed,blocked,pending}` | 各状态任务数 |
+
+Grafana `http://localhost:3000`（admin/admin）加 Prometheus 数据源（`http://prometheus:9090`）即可查询。端口约定、Milvus 指标抓取、Pushgateway 清理详见 `monitoring/README.md`。上报全程降级：未装 `prometheus-client`、或 Pushgateway 不可达时静默跳过，绝不拖垮主流程。
+
+## CI/CD（GitHub Actions）
+
+`.github/workflows/ci.yml` 在 push / PR 时自动跑：
+
+| job | 做什么 |
+| --- | --- |
+| lint | `ruff check` + `ruff format --check` + `mypy`（mypy 建议性、不阻塞） |
+| test | `pytest`，Python 3.11 / 3.12 矩阵，离线、零密钥 |
+| build | `python -m build` 打 wheel，装完冒烟 `coding-agent --help` |
+| test-docker | Docker 沙箱集成测试（`pytest -m docker` + 全流程 mock），自动运行 |
+
+测试强制 mock + subprocess、离线可跑，故 CI 无需任何 API key / Docker / Milvus。发 PyPI、在 CI 里开 LangSmith trace 等需要密钥的场景，用 GitHub Secrets，永不进仓库。
